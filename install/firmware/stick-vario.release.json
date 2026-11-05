@@ -7,7 +7,7 @@
   "runtime": "UIFlow2 / MicroPython with M5 and viper",
   "app": {
     "url": "stick_vario_ram.py",
-    "sha256": "59ecf459940cb264f32e776c8971e2f3c2a17cef70a607755023af6032301989",
-    "bytes": 236012
+    "sha256": "27421cbefd6e275e877fcfa72ed679c1bb86bf8a850055cc8ecee61d06cd30eb",
+    "bytes": 233513
   }
 }

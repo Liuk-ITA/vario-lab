@@ -1,0 +1,3 @@
+* text=auto eol=lf
+# Release payloads must retain exactly the bytes described by their manifest.
+install/firmware/stick_vario_ram.py -text
