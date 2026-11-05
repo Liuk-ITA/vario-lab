@@ -1,0 +1,15 @@
+_site/
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+runs/
+*.log
+*.zip
+*_bonds*.json
+tests/results.json
+guide/en/
+guide/it/
+guide/index.html
+guide/assets/

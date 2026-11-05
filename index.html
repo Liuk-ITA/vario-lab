@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="it">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#132a38">
+<title>Vario Lab — ascolta i tuoi dati</title><link rel="stylesheet" href="style.css">
+<script defer src="engine.js"></script><script defer src="data/demo.js"></script><script defer src="app.js"></script><link rel="stylesheet" href="i18n/style.css"><script defer src="i18n/catalog.js"></script><script defer src="i18n/ui.js"></script></head>
+<body>
+<aside class="rail">
+  <a class="brand" href="#"><svg viewBox="0 0 44 32" aria-hidden="true"><path d="M2 28 16 5l8 13 5-8 13 18M11 28l9-14" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/></svg><span>VARIO<span class="brand-light">LAB</span></span></a>
+  <div class="rail-caption">IL TUO BANCO DI PROVA</div>
+  <button class="nav active" data-nav="workbench"><span>◫</span> Laboratorio</button>
+  <button class="nav" data-nav="sources"><span>↔</span> Sorgenti dati</button>
+  <button class="nav" data-nav="notes"><span>≡</span> Guida e protocolli</button>
+  <a class="nav" href="guide/">VibeVario guide / Guida</a>
+  <a class="nav" href="config/">Configura StickVario</a>
+  <a class="nav" href="install/">Installa StickVario</a>
+  <div class="rail-bottom"><span class="local-dot"></span> Tutto sul tuo dispositivo<p>Nessun dato viene caricato<br>su un server.</p><span class="version">PROTOTIPO · v0.1</span></div>
+</aside>
+<main>
+  <header><div><div class="eyebrow">STRUMENTI PER CHI VOLA</div><h1>Dai dati al suono<span>.</span></h1><p>Un solo volo. Più modi di sentirlo.</p></div><button id="export" class="button outline">↗ Esporta sessione</button></header>
+  <p class="site-intro">Confronta filtri e suoni del variometro sugli stessi dati: carica una registrazione oppure collega uno strumento USB o Bluetooth. I dati restano nel browser.</p>
+  <div class="workspace-tabs" role="tablist" aria-label="Modalità"><button role="tab" aria-selected="true" class="selected" data-mode="replay">↻ Replay</button><button role="tab" aria-selected="false" data-mode="record">● Registra</button><button role="tab" aria-selected="false" data-mode="live">⌁ Live</button><span id="mode-note">Riascolta, confronta, modifica.</span></div>
+  <section class="source-card" id="source-section">
+    <div class="source-symbol">⌁</div><div class="source-description"><span class="eyebrow">REGISTRAZIONE ATTIVA</span><h2 id="dataset-name">Cinque cicli, 120 cm</h2><div id="dataset-detail">M5StickS3 · BMP581 · dati reali</div></div>
+    <div class="source-tags"><span id="count-tag">12.610 campioni</span><span id="quality-tag">5 cicli manuali</span><span id="upstream-tag">Pressione grezza</span></div>
+    <button class="button outline" id="import">＋ Importa file</button><input id="files" type="file" accept=".csv,.json,.jsonl,.txt,.nmea,.log" multiple hidden>
+    <button class="button quiet" id="demo">Usa demo</button>
+  </section>
+  <section id="connection-panel" class="connection-panel" hidden>
+    <div><strong>Collega uno strumento</strong><p>USB seriale oppure BLE. Il dispositivo resta sotto il tuo controllo.</p></div>
+    <label>Baud seriale<select id="baud"><option>115200</option><option>9600</option><option>57600</option></select></label>
+    <button class="button outline" id="usb">Collega seriale</button><button class="button outline" id="ble">Collega BLE</button>
+    <button class="button outline" id="disconnect" disabled>Scollega</button><button class="button primary" id="record" disabled>● Avvia registrazione</button>
+    <div class="connection-status" id="connection-status" role="status">Nessun dispositivo collegato.</div>
+    <p class="muted">ESP32: scegli XCTRACK_vario e Collega BLE. HC-05/HC-06: associa in Windows, poi Collega seriale e seleziona la COM Bluetooth. <a href="guide/en/installation.html" target="_blank">Guida e limiti</a>. VARIO: attesi hPa; collegamento confermato dall'utente.</p><details open><summary>BLE e comandi dispositivo</summary><div class="advanced-grid">
+      <label>Servizio BLE<select id="ble-profile"><option value="xctrack">XCTRACK_vario ESP32 (XCTRACK_BLE)</option><option value="nus">Nordic UART (NUS)</option><option value="ess">Environmental Sensing: pressione</option><option value="custom">UART personalizzato</option></select></label>
+      <label>UUID servizio<input id="ble-service" value="6e400001-b5a3-f393-e0a9-e50e24dcca9e"></label>
+      <label>UUID notifiche<input id="ble-characteristic" value="6e400003-b5a3-f393-e0a9-e50e24dcca9e"></label>
+      <label>Comando USB (facoltativo)<input id="command" placeholder="Es. ARM per il firmware motion"></label><button class="button outline" id="send-command" disabled>Invia comando</button>
+    </div><p>Connessione non equivale a caricamento firmware. Nessun reset o comando viene inviato automaticamente. Le notifiche ESS usano pressione in unità di 0,1 Pa.</p></details>
+  </section>
+  <div id="notice" class="notice" role="status" hidden></div>
+  <div class="workbench">
+    <div class="left-column">
+      <section class="readouts">
+        <article class="readout main-readout"><div class="metric-label">VELOCITÀ VERTICALE <span id="readout-filter">REGRESSIONE</span></div><div class="metric-value" id="speed-value">—<small>m/s</small></div><div id="readout-quality">In attesa di un campione valido</div></article>
+        <article class="readout"><div class="metric-label">QUOTA RELATIVA</div><div class="metric-value small" id="height-value">—<small>m</small></div><div>rispetto al riferimento iniziale</div></article>
+        <article class="readout phase-readout"><div class="metric-label">FASE DEL MOVIMENTO</div><div id="phase-value" class="phase-pill">BASSO</div><div id="phase-detail">Riferimento manuale · 120 cm</div></article>
+      </section>
+      <section class="chart-card">
+        <div class="card-heading"><div><h2>Le stesse misure. Tre risposte.</h2><p>Velocità verticale · m/s</p></div><span class="badge" id="clock-badge">TEMPO NOMINALE · 80 Hz</span></div>
+        <div class="legend"><label><input type="checkbox" data-visible="lp" checked><i class="dot lp"></i> Passa-basso</label><label><input type="checkbox" data-visible="reg" checked><i class="dot reg"></i> Regressione</label><label><input type="checkbox" data-visible="kal" checked><i class="dot kal"></i> Kalman</label><label><input type="checkbox" data-visible="dual" checked><i class="dot dual"></i> RC adattato</label><label hidden><input type="checkbox" data-visible="hybrid"><i class="dot hybrid"></i> MiniVario adattato</label><label><input type="checkbox" data-visible="sky"><i class="dot" style="background:#b45669"></i> SkyBean adattato</label><span><i class="dash"></i> Media di sezione (proxy)</span></div>
+        <canvas id="velocity-chart" aria-label="Confronto delle velocità verticali dei tre filtri" role="img"></canvas>
+        <div class="secondary-heading"><div class="chart-switch"><button data-channel="height" class="selected">Quota</button><button data-channel="pressure">Pressione</button></div><span id="cursor-note">I marcatori verticali indicano le pressioni del pulsante A.</span></div>
+        <canvas id="height-chart" aria-label="Quota relativa o pressione nel tempo" role="img"></canvas>
+        <div class="chart-foot"><span id="chart-clock">Asse temporale: ricostruzione locale dei blocchi FIFO.</span><span id="segments">1 segmento</span></div>
+      </section>
+      <section class="transport" aria-label="Controlli di riproduzione"><div class="transport-controls"><button id="play" class="play" aria-label="Avvia replay">▶</button><button id="restart" class="icon-button" aria-label="Torna all'inizio">↤</button><span id="position">00:00</span><span class="time-divider">/</span><span id="duration">02:38</span><div class="spacer"></div><label class="loop-label"><input type="checkbox" id="loop" checked> ↻ Loop</label><select id="playback-rate" aria-label="Velocità replay"><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></div><input id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Posizione nella registrazione"><div class="timeline-labels"><span>INIZIO</span><span id="timeline-description">5 salite + 5 discese · escursione dichiarata 1,20 m</span><span>FINE</span></div></section>
+      <section class="audio-card"><div class="audio-symbol">♫</div><div class="audio-heading"><h2>Ascolta la differenza</h2><p>Stessi dati, un carattere diverso.</p></div><button id="audio-toggle" class="button outline" aria-pressed="false">Audio disattivato</button><div class="profile-controls"><label>Profilo filtro + suono<select id="lab-profile"><option value="custom">Personalizzato</option><option value="dualmean">Kalman + bip doppia media</option><option value="rc">RC / doppia EMA</option><option value="sky">SkyBean / scalare adattato</option><option value="curves">Kalman + curve sonore</option><option value="pair">Kalman + coppie di toni</option><option value="kal">Kalman barometrico</option><option value="reg">Regressione</option><option value="lp">Passa-basso + derivata</option></select></label><button id="next-profile" class="button outline">Profilo successivo &rarr;</button><p id="profile-description">Filtri e suoni combinabili. I profili dei progetti esterni sono adattamenti, non repliche dei prodotti.</p></div><div class="audio-settings">
+        <label>Segnale da ascoltare<select id="audio-source"><option value="reg">Regressione</option><option value="lp">Passa-basso</option><option value="kal">Kalman</option><option value="dual">RC / doppia EMA (adattato)</option><option value="sky">SkyBean / scalare adattato</option><option value="hybrid" hidden disabled>MiniVario / ibrido (adattato)</option><option value="external">Vario ricevuto</option></select></label>
+        <label>Algoritmo sonoro<select id="audio-preset"><option value="classic">Classico · bip proporzionali</option><option value="dualmean">Bip doppia media</option><option value="curves">Curve / stile SkyDrop adattato</option><option value="pair">Coppie / stile BiBean adattato</option><option value="soft" hidden disabled>Morbido · isteresi</option><option value="mini" hidden disabled>MiniVario / archivio</option><option value="continuous">Continuo · intonazione</option></select></label>
+        <label>Salita da (m/s)<input id="climb-threshold" type="number" min="0" max="5" step="0.05" value="0.10"></label>
+        <label>Discesa da (m/s)<input id="sink-threshold" type="number" min="-10" max="0" step="0.1" value="-0.5"></label>
+        <label><span>Isteresi salita (0.04 m/s)</span><input id="audio-hysteresis" type="checkbox"></label>
+        <details style="grid-column:1/-1"><summary>Opzioni curve e ascendenza debole</summary><div class="audio-settings">        <label>Durata toni / curve<input id="audio-tone-scale" type="number" min="0.2" max="3" step="0.1" value="1"></label>
+        <label>Durata pause / curve<input id="audio-pause-scale" type="number" min="0.2" max="3" step="0.1" value="1"></label>
+        <label><span>Weak lift / curve e coppie</span><input id="audio-weak" type="checkbox"></label>
+</div></details>
+        <details style="grid-column:1/-1"><summary>Bip doppia media / regolazioni</summary><div class="audio-settings"><label>Tau media lenta (s)<input id="audio-slow-tau" type="number" min="0.1" max="10" step="0.1" value="1.5"></label><label>Duty tono (%)<input id="audio-dual-duty" type="number" min="10" max="90" step="5" value="50"></label><label>Prima parte del tono (%)<input id="audio-dual-split" type="number" min="10" max="90" step="5" value="50"></label></div><p>Prima parte: stima attuale. Seconda: media lenta. Nessuna pausa fra le due.</p></details>
+        <label>Volume<input id="volume" type="range" min="0" max="0.4" step="0.01" value="0.08"></label>
+      </div><div class="audio-status" id="audio-status">L'audio parte solo con un tuo clic. Pausa e ricerca interrompono il tono.</div></section>
+    </div>
+    <aside class="settings-column">
+      <section class="settings-card"><div class="card-heading"><h2>Il tuo esperimento</h2><button id="reset-settings" class="text-button">Ripristina</button></div>
+        <label>Base temporale dei filtri<select id="time-basis"><option value="nominal">Nominale · sequenza / Hz</option><option value="device">Timestamp dispositivo</option><option value="batch">Ancoraggi locali FIFO</option><option value="receive">Ricezione sul PC</option></select></label>
+        <div class="field-pair"><label>Frequenza (Hz)<input id="sample-rate" type="number" min="0.1" max="1000" step="0.1" value="80"></label><label>Aria al riferimento (°C)<input id="temperature" type="number" min="-40" max="50" step="1" value="15"></label></div>
+        <label>Tipo di segnale<select id="signal-kind"><option value="pressure">Pressione → quota → vario</option><option value="height">Quota → vario</option><option value="velocity">Velocità verticale ricevuta</option></select></label>
+        <label>Elaborazione a monte<select id="upstream"><option value="raw">Dato dichiarato grezzo</option><option value="filtered">Dato già filtrato</option><option value="unknown">Filtraggio sconosciuto</option></select></label>
+        <p class="hint" id="clock-hint">I tempi originali restano conservati. La scelta modifica solo l'elaborazione.</p>
+      </section>
+      <section class="filter-card"><div class="filter-title"><span class="filter-number lp">01</span><h2>Passa-basso + derivata</h2></div><p id="lp-description">Due stadi, una risposta morbida.</p><label>Tau quota <output id="tau-height-output">0,25 s</output><input id="tau-height" type="range" min="0.05" max="1.5" step="0.01" value="0.25"></label><label>Tau velocità <output id="tau-velocity-output">0,20 s</output><input id="tau-velocity" type="range" min="0.03" max="1" step="0.01" value="0.20"></label><div class="filter-stat">σ apparente <strong id="lp-stat">—</strong><small>m/s · non è errore misurato</small></div></section>
+      <section class="filter-card" id="dual-card"><h2>RC / doppia EMA</h2><p>Differenza veloce/lenta, calibrata in m/s; terza EMA sull'uscita.</p><div class="field-pair"><label>Tau veloce (s)<input id="dual-fast" type="number" min="0.02" max="2" step="0.01" value="0.19"></label><label>Tau lenta (s)<input id="dual-slow" type="number" min="0.03" max="4" step="0.01" value="0.39"></label></div><label>Tau uscita (s)<input id="dual-output" type="number" min="0.01" max="2" step="0.01" value="0.19"></label><div class="filter-stat">&sigma; apparente <strong id="dual-stat">&mdash;</strong><small>m/s / include il movimento reale</small></div></section>
+      <section class="filter-card" id="hybrid-card" hidden><h2>MiniVario / ibrido</h2><p>Derivata &rarr; EMA &rarr; media mobile &rarr; EMA. Adattato a tempi in secondi.</p><div class="field-pair"><label>Tau ingresso (s)<input id="hybrid-input" type="number" min="0.01" max="2" step="0.01" value="0.15654"></label><label>Finestra (s)<input id="hybrid-window" type="number" min="0.05" max="3" step="0.025" value="0.875"></label></div><label>Tau uscita (s)<input id="hybrid-output" type="number" min="0.01" max="2" step="0.01" value="0.35046"></label><div class="filter-stat">&sigma; apparente <strong id="hybrid-stat">&mdash;</strong><small>m/s / non rumore statico puro</small></div></section>
+      <section class="filter-card" id="sky-card"><h2>SkyBean / scalare adattato</h2><p>Kalman sulla pressione, poi differenza di quota a distanza fissa. Solo ingresso pressione.</p><div class="field-pair"><label>Sigma pressione (Pa)<input id="sky-sigma" type="number" min="0.01" max="5" step="0.01" value="0.20"></label><label>q pressione (Pa2/s)<input id="sky-q" type="number" min="0.0001" max="10" step="0.001" value="0.01"></label></div><label>Intervallo derivata (s)<input id="sky-window" type="number" min="0.05" max="2" step="0.05" value="0.50"></label><div class="filter-stat">Sigma apparente <strong id="sky-stat">--</strong><small>m/s / non e rumore statico puro</small></div></section>
+      <section class="filter-card" id="reg-card"><div class="filter-title"><span class="filter-number reg">02</span><h2>Regressione lineare</h2></div><p>La pendenza di una finestra passata.</p><label>Finestra mobile <output id="reg-window-output">0,60 s</output><input id="reg-window" type="range" min="0.1" max="2" step="0.025" value="0.60"></label><div class="filter-stat">σ apparente <strong id="reg-stat">—</strong><small>m/s · su tutti i tratti validi</small></div></section>
+      <section class="filter-card" id="kal-card"><div class="filter-title"><span class="filter-number kal">03</span><h2>Kalman · quota / velocità</h2></div><p>Un modello che predice e corregge.</p><div class="field-pair"><label>σ quota (m)<input id="kal-sigma" type="number" min="0.001" max="2" step="0.005" value="0.020"></label><label>q (m²/s³)<input id="kal-q" type="number" min="0.0001" max="10" step="0.005" value="0.020"></label></div><div class="filter-stat">σ apparente <strong id="kal-stat">—</strong><small>m/s · non rumore statico puro</small></div></section>
+      <div class="reference-note"><strong>Un riferimento, non una verità assoluta.</strong><p>120 cm e i pulsanti identificano estremi e velocità media della sezione. Il movimento istantaneo non è stato misurato.</p></div>
+    </aside>
+  </div>
+  <section class="session-notes" id="notes-section"><div><span class="eyebrow">DENTRO QUESTA SESSIONE</span><h2>Una registrazione, tutta la sua storia.</h2></div><p id="session-summary">Pressioni originali, tempi del dispositivo e ricezione PC restano separati. Non confondiamo un dato filtrato con una misura grezza.</p><button class="button outline" id="download-csv">↓ Campioni CSV</button><button class="button outline" id="download-analysis">↓ Risultati CSV</button><button class="button outline" id="download-firmware">↓ Firmware VibeVario</button></section>
+  <footer>VARIO LAB <span>Esperimenti riproducibili. Ascolto consapevole.</span><a href="guide/">Documentazione</a><a href="https://github.com/Liuk-ITA/vario-lab/blob/main/ROADMAP.md">Scaletta</a></footer>
+</main>
+<dialog id="export-dialog"><form method="dialog"><button class="dialog-close" aria-label="Chiudi">×</button></form><span class="eyebrow">PORTA CON TE L'ESPERIMENTO</span><h2>Esporta la sessione</h2><p>Il file JSON conserva dati originali, marcatori e parametri. Puoi ricaricarlo per riprendere il confronto.</p><div class="dialog-actions"><button id="save-session" class="button primary">↓ Sessione JSON</button><button id="save-raw" class="button outline">↓ Flusso originale JSONL</button></div></dialog>
+<noscript>Questa app elabora i dati localmente e richiede JavaScript.</noscript>
+</body></html>

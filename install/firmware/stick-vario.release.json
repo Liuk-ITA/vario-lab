@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "kind": "micropython-app",
+  "board": "M5StickS3",
+  "name": "VibeVario",
+  "version": "vibevario-0.8.0",
+  "runtime": "UIFlow2 / MicroPython with M5 and viper",
+  "app": {
+    "url": "stick_vario_ram.py",
+    "sha256": "59ecf459940cb264f32e776c8971e2f3c2a17cef70a607755023af6032301989",
+    "bytes": 236012
+  }
+}

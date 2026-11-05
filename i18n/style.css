@@ -1,0 +1,5 @@
+.language-picker{margin-left:auto;flex-shrink:0;font:13px system-ui,sans-serif}
+.language-picker select{min-width:95px;min-height:36px;border:1px solid #7e98aa;border-radius:8px;padding:6px 10px;background:#f5f8fb;color:#173447;font:inherit;cursor:pointer}
+header{gap:14px}
+.site-intro{max-width:84ch;color:#536b7b;font-size:14px;line-height:1.6;margin:0 0 22px}
+@media(max-width:650px){header{flex-wrap:wrap}.language-picker{align-self:flex-start}}
